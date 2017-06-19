@@ -80,11 +80,13 @@ function _spinner() {
 }
 
 function start_spinner {
+    set +m # silence job control messages GLOBALLY
     # $1 : msg to display
-    _spinner "start" "${1}" &
+    { _spinner "start" "${1}" & } 2> /dev/null
     # set global spinner pid
     _sp_pid=$!
     disown
+    set -m # re-enable job control messages GLOBALLY
 }
 
 function stop_spinner {
