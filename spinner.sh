@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Author: Tasos Latsas
+# https://github.com/packy/bash-spinner
+# forked from https://github.com/tlatsas/bash-spinner
 
 # spinner.sh
 #
