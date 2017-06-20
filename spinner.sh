@@ -35,6 +35,8 @@ function _spinner() {
     local green="\e[1;32m"
     local red="\e[1;31m"
     local nc="\e[0m"
+    local cursor_off="\e[?25l"
+    local cursor_on="\e[?25h"
 
     case $1 in
         start)
@@ -49,6 +51,7 @@ function _spinner() {
             sp='\|/-'
             delay=${SPINNER_DELAY:-0.15}
 
+            printf "$cursor_off"
             while :
             do
                 printf "\b${sp:i++%${#sp}:1}"
@@ -56,6 +59,7 @@ function _spinner() {
             done
             ;;
         stop)
+            printf "$cursor_on"
             if [[ -z ${3} ]]; then
                 echo "spinner is not running.."
                 exit 1
