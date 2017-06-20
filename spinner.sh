@@ -48,7 +48,7 @@ function _spinner() {
 
             # start spinner
             i=1
-            sp='\|/-'
+            sp=${SPINNER_STYLE:='\|/-'}
             delay=${SPINNER_DELAY:-0.15}
 
             printf "$cursor_off"
@@ -99,3 +99,114 @@ function stop_spinner {
     unset _sp_pid
 }
 
+function select_spinner {
+    # $1 : spinner to use
+    case $1 in
+        arrows)       SPINNER_STYLE="←↖↑↗→↘↓↙" ;;
+        vpulse)       SPINNER_STYLE="▁▃▅▆▇▆▅▃" ;;
+        hpulse)       SPINNER_STYLE="▏▎▍▋▊▉▉▊▋▍▎" ;;
+        hpulse2)      SPINNER_STYLE="▉▊▋▍▎▏▎▍▌▊▉" ;;
+        hpulse3)      SPINNER_STYLE="▉▊▋▌▍▎▏▎▍▌▋▊▉" ;;
+        block1)       SPINNER_STYLE="▖▘▝▗" ;;
+        block2)       SPINNER_STYLE="▌▀▐▄" ;;
+        lines)        SPINNER_STYLE="┤┘┴└├┌┬┐" ;;
+        triangle)     SPINNER_STYLE="◢◣◤◥" ;;
+        square)       SPINNER_STYLE="◰◳◲◱" ;;
+        circle1)      SPINNER_STYLE="◴◷◶◵" ;;
+        circle2)      SPINNER_STYLE="◐◓◑◒" ;;
+        circle3)      SPINNER_STYLE="◜◝◞◟" ;;
+        boom)         SPINNER_STYLE=".oO@*" ;;
+        dot|dot-cw)   SPINNER_STYLE="⠈⠐⠠⢀⡀⠄⠂⠁" ;;
+        dot-ccw)      SPINNER_STYLE="⠁⠂⠄⡀⢀⠠⠐⠈" ;;
+        dots|dots-cw) SPINNER_STYLE="⣾⣷⣯⣟⡿⢿⣻⣽" ;;
+        dots-ccw)     SPINNER_STYLE="⣾⣽⣻⢿⡿⣟⣯⣷" ;;
+        diamonds)     SPINNER_STYLE="◇◆◈◆" ;;
+        default|*)    SPINNER_STYLE='\|/-' ;;
+    esac
+}
+
+function spinner_gallery {
+    local time=${1:-30}
+    local delay=${SPINNER_DELAY:-0.15}
+
+    local hide_cursor="\e[?25l"
+    local show_cursor="\e[?25h"
+    local clear_screen="\e[2J"
+    local cursor_UL_screen="\e[H" # move cursor to upper left corner of screen
+
+    # create a trap to allow us to exit cleanly on ^C
+    function spinner_gallery_finish {
+        printf "$show_cursor"
+        END=$START # exit the loop ASAP
+    }
+    trap spinner_gallery_finish SIGINT
+
+    function spinner_gallery_max {
+        perl -e 'print $ARGV[0] > $ARGV[1] ? $ARGV[0] : $ARGV[1]' -- "$1" "$2"
+    }
+    function spinner_gallery_min {
+        perl -e 'print $ARGV[0] < $ARGV[1] ? $ARGV[0] : $ARGV[1]' -- "$1" "$2"
+    }
+
+    # get the list of styles from the definition of the select_spinner function
+    STYLES=$(type select_spinner | perl -ne '
+             s/\s+\|\s+\*//;
+             /^\s+(.*)\)/ && do {
+               $s = $1;
+               $s =~ s/\s+//g;
+               print qq{"$s" };
+             }')
+
+    local MAX=0
+    local LIST=""
+    for ITEM in $STYLES; do
+        eval ITEM=$ITEM
+
+        MAX=$(spinner_gallery_max $MAX ${#ITEM})
+
+        local NAME=$(echo $ITEM | sed 's/\|.*//' | sed 's/\-/_/g')
+
+        LIST="$LIST $NAME"
+
+        local STYLE=style_$NAME
+        eval local $STYLE=$(echo $ITEM | sed 's/\|.*//')
+
+        local LABEL=label_$NAME
+        eval local $LABEL=\""$ITEM"\"
+
+        local VAR=i_$NAME
+        eval local $VAR=1
+    done
+
+    local START=$( date +%s )
+    local END=$(( $START + $time + 1 ))
+
+    printf "$clear_screen"
+
+    while [[ $( date +%s ) -le $END ]]; do
+        printf "$cursor_UL_screen"
+        printf "$hide_cursor"
+        echo
+        for NAME in $LIST; do
+            local STYLE=$(eval "echo \$style_$NAME")
+            local LABEL=$(eval "echo \$label_$NAME")
+            local VAR=i_$NAME
+            select_spinner $STYLE
+            _SPINNER="${SPINNER_STYLE:$VAR++%${#SPINNER_STYLE}:1}"
+            printf "\b %${MAX}s %s\n" $LABEL "$_SPINNER"
+        done
+        local REMAINING=$(spinner_gallery_min $(( $END - $( date +%s ) )) $time)
+        if [[ $REMAINING -ge 0 ]]; then
+            printf "\ndisplaying gallery for 0:%02d " $REMAINING
+        fi
+        sleep $delay
+    done
+
+    # clean up afterwards
+    trap - SIGINT
+    printf "\n\n"
+    printf "$show_cursor"
+    unset -f spinner_gallery_finish # since functions can't be local
+    unset -f spinner_gallery_max
+    unset -f spinner_gallery_min
+}
