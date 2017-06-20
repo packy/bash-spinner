@@ -8,7 +8,7 @@ sleep 2
 stop_spinner $?
 
 # test fail
-start_spinner 'copying non-existen files...'
+start_spinner 'copying non-existent files...'
 # use sleep to give spinner time to fork and run
 # because cp fails instantly
 sleep 1
