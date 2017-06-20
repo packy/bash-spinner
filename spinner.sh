@@ -68,13 +68,13 @@ function _spinner() {
             kill $3 > /dev/null 2>&1
 
             # inform the user uppon success or failure
-            echo -en "\b["
+            printf "\b["
             if [[ $2 -eq 0 ]]; then
-                echo -en "${green}${on_success}${nc}"
+                printf "${green}${on_success}${nc}"
             else
-                echo -en "${red}${on_fail}${nc}"
+                printf "${red}${on_fail}${nc}"
             fi
-            echo -e "]"
+            printf "]\n"
             ;;
         *)
             echo "invalid argument, try {start/stop}"
