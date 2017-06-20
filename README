@@ -14,3 +14,15 @@ usage:
       stop_spinner [your command's exit status]
 
 Also see: test.sh
+
+You can also specify different spinner types through select_spinner:
+    select_spinner arrows
+    start_spinner 'This spinner has arrows'
+    sleep 5
+    stop_spinner $?
+
+The list of pre-defined spinners can be viewed through the
+spinner_gallery command.
+
+You can define a spinner of your own by setting the SPINNER_STYLE variable.
+
